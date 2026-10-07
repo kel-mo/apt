@@ -15,3 +15,4 @@ fullstory/kernel-remover
 fullstory/setpassword
 fullstory/sshstart
 fullstory/xdg-browser-launcher
+fullstory/linux-aptosid
