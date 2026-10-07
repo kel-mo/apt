@@ -13,6 +13,9 @@ on:
       owner:
         description: owner of the source repo
         default: fullstory
+      prepare:
+        description: shell run in the source before the build (linux-aptosid fetches its orig here; see README)
+        default: ''
 
 permissions: {}
 
@@ -65,6 +68,7 @@ jobs:
       repository: ${{ inputs.owner }}/${{ inputs.repo }}
       ref: ${{ needs.version.outputs.sha }}
       version: ${{ needs.version.outputs.version }}
+      prepare: ${{ inputs.prepare }}
 
   release:
     needs: [version, build]
