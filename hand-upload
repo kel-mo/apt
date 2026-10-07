@@ -1,0 +1,67 @@
+#!/bin/sh
+# hand-upload - offer a hand build to kel-mo/apt as a hand/ release
+#
+# usage: hand-upload [--force] CHANGES
+#
+# Creates release hand/<source>/<version> (DEP-14) with the .changes and
+# its files, then dispatches publish. See README.md.
+
+set -eu
+
+SELF=${SELF:-kel-mo/apt}
+here=$(cd "$(dirname "$0")" && pwd)
+REPOS=${REPOS:-$here/repos.txt}
+
+die() {
+	echo "hand-upload: $*" >&2
+	exit 1
+}
+
+force=''
+if [ "${1:-}" = --force ]; then
+	force=1
+	shift
+fi
+[ $# -eq 1 ] || { echo "usage: hand-upload [--force] CHANGES" >&2; exit 2; }
+changes=$1
+dir=$(dirname "$changes")
+[ -f "$changes" ] || die "$changes: no such file"
+
+src=$(sed -n 's/^Source:[[:space:]]*//p' "$changes" | head -n 1 | cut -d' ' -f1)
+version=$(sed -n 's/^Version:[[:space:]]*//p' "$changes" | head -n 1)
+[ -n "$src" ] && [ -n "$version" ] || die "$changes: no Source or Version"
+files=$(awk '/^Files:/ { on = 1; next } on && /^[ \t]/ { print $NF; next } { on = 0 }' "$changes")
+[ -n "$files" ] || die "$changes: lists no files"
+
+# a source CI builds: above its newest release, below the one that follows
+repo=$(sed -e 's/#.*//' -e 's/[[:space:]]//g' "$REPOS" | awk -F / -v s="$src" '$2 == s { print; exit }')
+if [ -n "$repo" ] && [ -z "$force" ]; then
+	tags=$(gh api --paginate "repos/$repo/releases?per_page=100" \
+		--jq '.[] | select(.draft | not) | .tag_name | select(startswith("debian/"))')
+	ci=''
+	for tag in $tags; do
+		v=$(printf '%s\n' "${tag#debian/}" | tr '%_' ':~')
+		if [ -z "$ci" ] || dpkg --compare-versions "$v" gt "$ci"; then
+			ci=$v
+		fi
+	done
+	if [ -n "$ci" ] && dpkg --compare-versions "$version" le "$ci"; then
+		die "$version is not above $repo's newest CI release $ci; publish would prune it (--force to upload anyway)"
+	fi
+	case $version in
+	*~*|*+*) ;;
+	*) die "$version would outrank the release that follows it; use V~hand1, or V+hand1 when V is released (--force to upload anyway)" ;;
+	esac
+fi
+
+set -- "$changes"
+for f in $files; do
+	[ -f "$dir/$f" ] || die "$dir/$f: missing"
+	set -- "$@" "$dir/$f"
+done
+
+tag=hand/$src/$(printf '%s\n' "$version" | tr ':~' '%_')
+gh release create "$tag" "$@" --repo "$SELF" --title "$tag" --latest=false \
+	--notes "Hand build of $src $version for development, uploaded with hand-upload."
+gh workflow run publish.yml --repo "$SELF"
+echo "hand-upload: $tag created, publish dispatched"
