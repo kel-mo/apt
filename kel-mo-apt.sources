@@ -1,0 +1,16 @@
+Types: deb deb-src
+URIs: https://kel-mo.github.io/apt/
+Suites: sid
+Components: main
+Architectures: amd64 arm64
+Signed-By:
+ -----BEGIN PGP PUBLIC KEY BLOCK-----
+ .
+ mDMEasXg/hYJKwYBBAHaRw8BAQdA1l2WGFnUMhqTPKfBQVprHcYJvrT6RrkLGjHS
+ AXCVoUu0KmFwdG9zaWQgZGV2IHJlcG8gKEtlbCkgPGtlbHZtb2RAZ21haWwuY29t
+ PoiWBBMWCgA+FiEEtvNPmetW8MsJqUQkLfS06K269ugFAmrF4P4CGwMFCQPCZwAF
+ CwkIBwMFFQoJCAsFFgMCAQACHgECF4AACgkQLfS06K269ugBFAD+NevGWkgodtuo
+ N429CbTIBXIxZ8M43Cfgcpzd8l4KXCYA/2jw9JxySc743jdI8EoUdFmzCJS93OXc
+ Cm5rne66B1sJ
+ =s+L5
+ -----END PGP PUBLIC KEY BLOCK-----
