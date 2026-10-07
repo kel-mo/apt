@@ -1,0 +1,17 @@
+# repos whose newest debian/* Release publish.sh serves; lines starting with # are ignored
+fullstory/fll-live-boot
+fullstory/apt-conf-aptosid
+fullstory/aptosid-art-legacy
+fullstory/aptosid-art-meta
+fullstory/aptosid-irc
+fullstory/aptosid-keyring
+fullstory/aptosid-scripts
+fullstory/aptosid-settings-desktop
+fullstory/calamares-settings-aptosid
+fullstory/configure-cups
+fullstory/grub2-fll-fromiso
+fullstory/infobash
+fullstory/kernel-remover
+fullstory/setpassword
+fullstory/sshstart
+fullstory/xdg-browser-launcher

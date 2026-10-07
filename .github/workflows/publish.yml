@@ -1,0 +1,76 @@
+name: publish
+
+# Build the apt repo from verified Releases and deploy it to Pages.
+# pre.yml and hand-upload dispatch it too.
+
+on:
+  schedule:
+    - cron: '41 * * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: rebuild and deploy even if nothing changed
+        type: boolean
+        default: false
+
+permissions: {}
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    permissions:
+      # pruning deletes releases and tags
+      contents: write
+      attestations: read
+    outputs:
+      changed: ${{ steps.publish.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install reprepro
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends reprepro
+
+      - name: Import the signing key
+        env:
+          APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
+        run: printf '%s\n' "$APT_SIGNING_KEY" | gpg --batch --import
+
+      - name: Build the site
+        id: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          if [ "$FORCE" = true ]; then
+            ./publish.sh -p -f site
+          else
+            ./publish.sh -p site
+          fi
+
+      - uses: actions/upload-pages-artifact@v5
+        if: steps.publish.outputs.changed == 'true'
+        with:
+          path: site
+          include-hidden-files: true
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.changed == 'true'
+    runs-on: ubuntu-26.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5
