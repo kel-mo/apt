@@ -9,9 +9,9 @@ on:
   workflow_call:
     inputs:
       repository:
-        description: owner/repo to build
+        description: owner/repo to build; the caller when empty
         type: string
-        default: ${{ github.repository }}
+        default: ''
       ref:
         description: branch, tag or commit; a debian/* tag must match the changelog
         type: string
@@ -49,7 +49,7 @@ jobs:
 
       - uses: actions/checkout@v7
         with:
-          repository: ${{ inputs.repository }}
+          repository: ${{ inputs.repository || github.repository }}
           ref: ${{ inputs.ref }}
           path: src
           persist-credentials: false
@@ -79,7 +79,7 @@ jobs:
         if: inputs.version != ''
         working-directory: src
         env:
-          REPOSITORY: ${{ inputs.repository }}
+          REPOSITORY: ${{ inputs.repository || github.repository }}
           VERSION: ${{ inputs.version }}
         run: |
           apt-get install -y --no-install-recommends devscripts
