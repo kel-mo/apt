@@ -1,0 +1,100 @@
+name: pre
+run-name: pre ${{ inputs.owner }}/${{ inputs.repo }} ${{ inputs.ref }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: source repo, e.g. fll-live-boot
+        required: true
+      ref:
+        description: branch, tag or commit to build
+        required: true
+      owner:
+        description: owner of the source repo
+        default: fullstory
+
+permissions: {}
+
+jobs:
+  version:
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    outputs:
+      sha: ${{ steps.version.outputs.sha }}
+      source: ${{ steps.version.outputs.source }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ inputs.owner }}/${{ inputs.repo }}
+          ref: ${{ inputs.ref }}
+          path: src
+          persist-credentials: false
+
+      - name: Pre-release version
+        id: version
+        working-directory: src
+        run: |
+          sha=$(git rev-parse HEAD)
+          version=$(dpkg-parsechangelog -SVersion)
+          # sort below the release that follows
+          if [ "$(dpkg-parsechangelog -SDistribution)" = UNRELEASED ]; then
+            version="$version~pre"
+          else
+            version="$version+pre"
+          fi
+          version="$version$(date -u +%Y%m%d%H%M).g${sha:0:7}"
+          {
+            echo "sha=$sha"
+            echo "source=$(dpkg-parsechangelog -SSource)"
+            echo "version=$version"
+          } >> "$GITHUB_OUTPUT"
+          echo "::notice::$version"
+
+  build:
+    needs: version
+    # becomes fullstory/ci/.github/workflows/deb.yml@v1
+    uses: ./.github/workflows/deb.yml
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    with:
+      repository: ${{ inputs.owner }}/${{ inputs.repo }}
+      ref: ${{ needs.version.outputs.sha }}
+      version: ${{ needs.version.outputs.version }}
+
+  release:
+    needs: [version, build]
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SOURCE: ${{ needs.version.outputs.source }}
+      VERSION: ${{ needs.version.outputs.version }}
+      FROM: ${{ inputs.owner }}/${{ inputs.repo }}@${{ needs.version.outputs.sha }}
+      REF: ${{ inputs.ref }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: deb-*
+          path: out
+          merge-multiple: true
+
+      - name: Release
+        run: |
+          # DEP-14
+          tag="pre/$SOURCE/$(echo "$VERSION" | tr ':~' '%_')"
+          gh release create "$tag" out/* \
+            --target "$GITHUB_SHA" \
+            --title "$SOURCE $VERSION" \
+            --notes "Pre-release build of $FROM ($REF) by $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID"
+
+      - name: Publish
+        run: gh workflow run publish.yml
