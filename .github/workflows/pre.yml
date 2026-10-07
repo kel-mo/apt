@@ -55,8 +55,7 @@ jobs:
 
   build:
     needs: version
-    # becomes fullstory/ci/.github/workflows/deb.yml@v1
-    uses: ./.github/workflows/deb.yml
+    uses: fullstory/ci/.github/workflows/deb.yml@v1
     permissions:
       contents: read
       id-token: write

@@ -9,8 +9,8 @@
 
 set -eu
 
-# later fullstory/ci/.github/workflows/deb.yml@refs/tags/v1
-SIGNER=${SIGNER:-kel-mo/apt/.github/workflows/deb.yml}
+# pinned to the v1 tag; the pilot was kel-mo/apt/.github/workflows/deb.yml
+SIGNER=${SIGNER:-fullstory/ci/.github/workflows/deb.yml@refs/tags/v1}
 # holds the pre/ and hand/ releases; empty skips them
 SELF=${SELF-kel-mo/apt}
 URL=${URL:-https://kel-mo.github.io/apt}

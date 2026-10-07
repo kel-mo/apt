@@ -97,9 +97,9 @@ the secret, and tell consumers to fetch `kel-mo-apt.sources` again.
 apt only knows the copy of the key embedded in their file, so the old
 copy stops working on the expiry date even if the key was extended.
 
-## Pilot
+## The build workflow
 
-During the pilot, the reusable build workflow lives here as
-`.github/workflows/deb.yml`, and `publish.sh` trusts attestations signed
-by it. Once it moves to `fullstory/ci` and is tagged `v1`, set `SIGNER` in
-`publish.sh` to `fullstory/ci/.github/workflows/deb.yml@refs/tags/v1`.
+Builds come from `fullstory/ci`'s reusable `deb.yml`, pinned at `v1`.
+`publish.sh` trusts attestations signed by that workflow at that tag,
+for CI releases and for this repository's own pre-releases alike. It
+was piloted here as `.github/workflows/deb.yml` before it moved.
