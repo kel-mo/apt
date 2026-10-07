@@ -70,12 +70,11 @@ A pre-release build of any public branch or commit:
     gh workflow run pre -R kel-mo/apt -f repo=fll-live-boot -f ref=<branch>
 
 linux-aptosid is a debian-only tree, so its pre-release needs the
-`prepare` input to fetch and unpack the kernel source, the same lines
-its caller in fullstory/linux-aptosid uses:
+`prepare` input to fetch and unpack the kernel source. `prepare/` holds
+the same lines its caller in fullstory/linux-aptosid uses:
 
     gh workflow run pre -R kel-mo/apt -f repo=linux-aptosid -f ref=master \
-      -f prepare="$(sed -n '/^      prepare: |/,/^[^ ]/{/^        /s/^        //p}' \
-        <(gh api repos/fullstory/linux-aptosid/contents/.github/workflows/deb.yml --jq .content | base64 -d))"
+      -f prepare="$(cat prepare/linux-aptosid)"
 
 A hand build, for example a Debian NMU:
 
