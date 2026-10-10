@@ -2,8 +2,8 @@
 
 A development apt repository for aptosid, served at
 <https://kel-mo.github.io/apt/>. It carries CI builds of the fullstory
-packages plus pre-release and hand builds, mostly for Kel's own testing
-and the nightly ISO builds. It is not the aptosid repository: slh builds
+packages plus pre-release builds, mostly for Kel's own testing and the
+nightly ISO builds. It is not the aptosid repository: slh builds
 and signs the official packages himself, and nothing here is ever
 uploaded there.
 
@@ -24,28 +24,26 @@ Think about what that trust means before adding it. Whoever can sign for
 a repository decides what apt installs as root on your machine. Here
 that is the dev key below, which lives in this repository's Actions
 secrets and signs whatever the publish run picks up. So in practice the
-people you trust are those who can change this repository's workflows or
-create Releases here, and those who can push a `debian/*` tag to any
-repository in `repos.txt`. Use it on machines you test on, not on ones
+people you trust are those who can change or run this repository's
+workflows, and those who can push a `debian/*` tag to any repository in
+`repos.txt`. Use it on machines you test on, not on ones
 you depend on.
 
 ## What it serves
 
 `publish.yml` runs every hour, and whenever a build finishes. It takes
 the newest `debian/*` Release of each repository in `repos.txt`, plus
-this repository's own `pre/*` and `hand/*` Releases. Every file of a CI
-or pre-release build must carry a GitHub build provenance attestation
-made by the signer workflow named at the top of `publish.sh`, for the
-repository the Release belongs to; one that does not fails the run and
-nothing is deployed. Hand builds are not attested: only someone with
-write access here can create them.
+this repository's own `pre/*` Releases. Every file must carry a GitHub
+build provenance attestation made by the signer workflow named at the
+top of `publish.sh`, for the repository the Release belongs to; one that
+does not fails the run and nothing is deployed.
 
 For each source the highest version wins, and the CI build wins a tie.
 The repository is rebuilt from scratch with reprepro on each change and
 signed with the dev key. `state.txt` on the site records what was
 published, so a run that finds nothing new deploys nothing. The run also
-deletes `pre/` and `hand/` Releases, and their tags, once their version
-is at or below the source's newest CI release.
+deletes `pre/` Releases, and their tags, once their version is at or
+below the source's newest CI release.
 
 `publish.sh` does all of this and runs locally too; see its header for
 the options and environment overrides. Debian's `gh` has no
@@ -54,16 +52,13 @@ instead.
 
 ## Versions
 
-A pre-release or hand build must sort below the release that follows
-it, so that release replaces it without anyone removing it. Take the top
+A pre-release build must sort below the release that follows it, so that release replaces it without anyone removing it. Take the top
 changelog version V: if its entry is still UNRELEASED, use
 `V~pre<UTC %Y%m%d%H%M>.g<sha7>`; if V is already released, use
-`V+pre…`. Hand builds follow the same rule with `V~hand1` or
-`V+hand1`. Release tags here are `pre/<source>/<version>` and
-`hand/<source>/<version>`, with the version mangled as in DEP-14
-(`:` becomes `%`, `~` becomes `_`).
+`V+pre…`. Release tags here are `pre/<source>/<version>`, with the
+version mangled as in DEP-14 (`:` becomes `%`, `~` becomes `_`).
 
-## Pre-release and hand builds
+## Pre-release builds
 
 A pre-release build of any public branch or commit:
 
@@ -86,17 +81,6 @@ plymouth carries an NMU on kel-mo/plymouth's `kelmo` branch:
 
 Its version comes out as `V+pre…`, so Debian's next upload replaces it:
 rebase the branch onto that upload and update `prepare/plymouth`.
-
-A hand build, for example a Debian NMU:
-
-    ./hand-upload ../plymouth_26.134.222-1.1_amd64.changes
-
-`hand-upload` creates the `hand/` Release with the .changes and its
-files, then starts a publish run. Build with `-sa` so the .changes
-carries the orig tarball. For a source that CI builds, it refuses
-a version that is not above the newest CI release, since publish would
-prune it at once, and a version without `~` or `+`, which would outrank
-the release that follows it. `--force` skips both checks.
 
 ## The signing key
 

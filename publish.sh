@@ -3,7 +3,7 @@
 #
 # usage: publish.sh [-f] [-p] SITE
 #   -f  build even if the state matches the live site's state.txt
-#   -p  prune pre/ and hand/ releases at or below their source's CI release
+#   -p  prune pre/ releases at or below their source's CI release
 #
 # Sets changed=true|false in $GITHUB_OUTPUT when that is set. See README.md.
 
@@ -11,7 +11,7 @@ set -eu
 
 # pinned to the v1 tag; the pilot was kel-mo/apt/.github/workflows/deb.yml
 SIGNER=${SIGNER:-fullstory/ci/.github/workflows/deb.yml@refs/tags/v1}
-# holds the pre/ and hand/ releases; empty skips them
+# holds the pre/ releases; empty skips them
 SELF=${SELF-kel-mo/apt}
 URL=${URL:-https://kel-mo.github.io/apt}
 KEY=${KEY:-B6F34F99EB56F0CB09A944242DF4B4E8ADBAF6E8}
@@ -123,7 +123,7 @@ done < "$work/repos"
 if [ -n "$SELF" ]; then
 	releases "$SELF" > "$work/rel"
 	while IFS=$tab read -r id tag n; do
-		case $tag in pre/*/*|hand/*/*) ;; *) continue ;; esac
+		case $tag in pre/*/*) ;; *) continue ;; esac
 		kind=${tag%%/*} rest=${tag#*/}
 		src=${rest%%/*} v=$(version "${rest#*/}")
 		dpkg --validate-version "$v" 2> /dev/null || { echo "publish: $SELF $tag: bad version, skipped" >&2; continue; }
@@ -131,7 +131,7 @@ if [ -n "$SELF" ]; then
 	done < "$work/rel"
 fi
 
-# per source the highest version wins, CI on a tie; ci sorts before hand and pre
+# per source the highest version wins, CI on a tie; ci sorts before pre
 sort -t "$tab" -k1,1 -k3,3 "$work/cand" > "$work/sorted"
 : > "$work/win"
 : > "$work/prune"
@@ -201,12 +201,9 @@ while IFS=$tab read -r src v kind repo id tag n; do
 		case $name in */*|.*|'') die "$repo $tag: odd asset name '$name'" ;; esac
 		gh api -H 'Accept: application/octet-stream' "repos/$repo/releases/assets/$aid" < /dev/null > "$dl/$name"
 	done < "$work/assets"
-	# hand/ releases are trusted as Kel's uploads
-	if [ "$kind" != hand ]; then
-		for f in "$dl"/*; do
-			verify "$repo" "$f" || die "$repo $tag: ${f##*/}: no attestation by $SIGNER"
-		done
-	fi
+	for f in "$dl"/*; do
+		verify "$repo" "$f" || die "$repo $tag: ${f##*/}: no attestation by $SIGNER"
+	done
 	# by digest: GitHub renames assets with ~ and other odd characters
 	(cd "$dl" && sha256sum -- *) > "$work/sums"
 	found=''

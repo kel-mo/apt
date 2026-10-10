@@ -1,7 +1,7 @@
 name: publish
 
 # Build the apt repo from verified Releases and deploy it to Pages.
-# pre.yml and hand-upload dispatch it too.
+# pre.yml dispatches it too.
 
 on:
   schedule:
