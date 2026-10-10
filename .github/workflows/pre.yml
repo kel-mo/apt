@@ -94,8 +94,8 @@ jobs:
         run: |
           # DEP-14
           tag="pre/$SOURCE/$(echo "$VERSION" | tr ':~' '%_')"
+          # no --target: a tag on an older commit whose workflows differ from main's is refused (403)
           gh release create "$tag" out/* \
-            --target "$GITHUB_SHA" \
             --title "$SOURCE $VERSION" \
             --notes "Pre-release build of $FROM ($REF) by $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID"
 
