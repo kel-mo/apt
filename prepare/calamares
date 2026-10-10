@@ -1,0 +1,4 @@
+apt-get install -y --no-install-recommends wget
+wget -nv -O ../calamares_3.4.2.orig.tar.xz \
+  https://deb.debian.org/debian/pool/main/c/calamares/calamares_3.4.2.orig.tar.xz
+echo "0057f88196c70afc2f01e82293787c355d1ead224d8adbda7ff65bee63a2e7d7  ../calamares_3.4.2.orig.tar.xz" | sha256sum -c
