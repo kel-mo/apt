@@ -76,6 +76,17 @@ the same lines its caller in fullstory/linux-aptosid uses:
     gh workflow run pre -R kel-mo/apt -f repo=linux-aptosid -f ref=master \
       -f prepare="$(cat prepare/linux-aptosid)"
 
+A patched Debian package builds the same way from a public packaging
+branch outside fullstory: `owner` names its account, and `prepare`
+fetches the orig and checks it against the checksum in Debian's .dsc.
+plymouth carries an NMU on kel-mo/plymouth's `kelmo` branch:
+
+    gh workflow run pre -R kel-mo/apt -f owner=kel-mo -f repo=plymouth \
+      -f ref=kelmo -f prepare="$(cat prepare/plymouth)"
+
+Its version comes out as `V+pre…`, so Debian's next upload replaces it:
+rebase the branch onto that upload and update `prepare/plymouth`.
+
 A hand build, for example a Debian NMU:
 
     ./hand-upload ../plymouth_26.134.222-1.1_amd64.changes

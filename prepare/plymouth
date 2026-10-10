@@ -1,0 +1,4 @@
+apt-get install -y --no-install-recommends wget
+wget -nv -O ../plymouth_26.134.222.orig.tar.xz \
+  https://deb.debian.org/debian/pool/main/p/plymouth/plymouth_26.134.222.orig.tar.xz
+echo "6ee1068216c5047923fabf0f6aa583e9d77cab383077358df3fc22f2ee398bb0  ../plymouth_26.134.222.orig.tar.xz" | sha256sum -c
