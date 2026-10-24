@@ -16,3 +16,4 @@ fullstory/setpassword
 fullstory/sshstart
 fullstory/xdg-browser-launcher
 fullstory/linux-aptosid
+fullstory/tas2783-compat
