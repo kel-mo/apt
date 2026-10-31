@@ -3,5 +3,6 @@ orig=$(debian/rules get-orig-source | awk '/^COMPLETED:/ { print $2 }')
 mv "$orig" ..
 tar -xJf ../"$(basename "$orig")" --strip 1
 # the pre-release version changed debian/changelog; regenerate control as the maintainer would (the target exits 1 by design)
-make -f debian/rules debian/control-real > /dev/null 2>&1 || true
+# no bytecode: dpkg-source -b runs without a clean, and refuses __pycache__
+PYTHONDONTWRITEBYTECODE=1 make -f debian/rules debian/control-real > /dev/null 2>&1 || true
 md5sum --check --status debian/control.md5sum
